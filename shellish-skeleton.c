@@ -355,6 +355,25 @@ int process_command(struct command_t *command) {
   pid_t pid = fork();
   if (pid == 0) // child
   {
+    // pipe
+    if (command->next) {
+      int pipe_file_d[2];
+      pipe(pipe_file_d);
+      pid_t pid2 = fork();
+      
+      if (pid2 != 0) {
+        close(pipe_file_d[0]);
+        dup2(pipe_file_d[1], STDOUT_FILENO);
+        close(pipe_file_d[1]);
+      } 
+      else {
+        close(pipe_file_d[1]);
+        dup2(pipe_file_d[0], STDIN_FILENO);
+        close(pipe_file_d[0]);
+        command = command->next;
+      }
+    }
+
     /// This shows how to do exec with environ (but is not available on MacOs)
     // extern char** environ; // environment variables
     // execvpe(command->name, command->args, environ); // exec+args+path+environ
