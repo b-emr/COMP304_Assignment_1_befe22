@@ -365,6 +365,22 @@ int process_command(struct command_t *command) {
 
     // TODO: do your own exec with path resolving using execv()
     // do so by replacing the execvp call below
+    
+    // Handle <
+    if (command->redirects[0]) {
+      freopen(command->redirects[0], "r", stdin);
+    }
+
+    // Handle >
+    if (command->redirects[1]) {
+      freopen(command->redirects[1], "w", stdout);
+    }
+
+    // Handle >>
+    if (command->redirects[2]) {
+      freopen(command->redirects[2], "a", stdout);
+    }
+
     char *path = find_executable(command->name);
     execv(path, command->args); // exec+args+path
     printf("-%s: %s: command not found\n", sysname, command->name);
