@@ -306,6 +306,35 @@ int prompt(struct command_t *command) {
   return SUCCESS;
 }
 
+char *find_executable(const char *name) {
+  if (strchr(name, '/')) {
+    if (access(name, X_OK) == 0)
+      return strdup(name);
+    return NULL;
+  }
+
+  const char *pathenv = getenv("PATH");
+  if (!pathenv)
+    return NULL;
+
+  char *paths = strdup(pathenv);
+  char *dir = strtok(paths, ":");
+  while (dir) {
+    char *full = malloc(strlen(dir) + 1 + strlen(name) + 1);
+    if (!full)
+      break;
+    sprintf(full, "%s/%s", dir, name);
+    if (access(full, X_OK) == 0) {
+      free(paths);
+      return full;
+    }
+    free(full);
+    dir = strtok(NULL, ":");
+  }
+  free(paths);
+  return NULL;
+}
+
 int process_command(struct command_t *command) {
   int r;
   if (strcmp(command->name, "") == 0)
@@ -336,7 +365,8 @@ int process_command(struct command_t *command) {
 
     // TODO: do your own exec with path resolving using execv()
     // do so by replacing the execvp call below
-    execvp(command->name, command->args); // exec+args+path
+    char *path = find_executable(command->name);
+    execv(path, command->args); // exec+args+path
     printf("-%s: %s: command not found\n", sysname, command->name);
     exit(127);
   } else {
