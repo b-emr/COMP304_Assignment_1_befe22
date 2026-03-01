@@ -307,13 +307,13 @@ int prompt(struct command_t *command) {
 }
 
 char *find_executable(const char *name) {
-  if (strchr(name, '/')) {
+  if (strchr(name, '/')) { // if the name contains a slash then treat it as a path
     if (access(name, X_OK) == 0)
       return strdup(name);
     return NULL;
   }
 
-  const char *pathenv = getenv("PATH");
+  const char *pathenv = getenv("PATH"); // get PATH environment variables
   if (!pathenv)
     return NULL;
 
@@ -323,8 +323,8 @@ char *find_executable(const char *name) {
     char *full = malloc(strlen(dir) + 1 + strlen(name) + 1);
     if (!full)
       break;
-    sprintf(full, "%s/%s", dir, name);
-    if (access(full, X_OK) == 0) {
+    sprintf(full, "%s/%s", dir, name); // construct full path
+    if (access(full, X_OK) == 0) { // checks if the file is executable
       free(paths);
       return full;
     }
@@ -358,18 +358,18 @@ int process_command(struct command_t *command) {
     char *fields = NULL;
     
     for (int i = 1; i < command->arg_count - 1; i++) {
-      if (strcmp(command->args[i], "-d") == 0 || strcmp(command->args[i], "--delimiter") == 0) {
+      if (strcmp(command->args[i], "-d") == 0 || strcmp(command->args[i], "--delimiter") == 0) { // handle delimiter argument
         delim = command->args[i + 1][0];
         i++;
       } 
-      else if (strcmp(command->args[i], "-f") == 0 || strcmp(command->args[i], "--fields") == 0) {
+      else if (strcmp(command->args[i], "-f") == 0 || strcmp(command->args[i], "--fields") == 0) { // handle fields argument
         fields = command->args[i + 1];
         i++;
       }
     }
     
     if (!fields) {
-      printf("-%s: %s: %s\n", sysname, command->name, strerror(errno));
+      printf("-%s: %s: %s\n", sysname, command->name, strerror(errno)); // check the fields argument
       return SUCCESS;
     }
     
@@ -378,7 +378,7 @@ int process_command(struct command_t *command) {
     char *fields_copy = strdup(fields);
     char *token = strtok(fields_copy, ",");
     while (token && field_count < 100) {
-      fields_arr[field_count++] = atoi(token);
+      fields_arr[field_count++] = atoi(token); // convert field number to integer
       token = strtok(NULL, ",");
     }
     free(fields_copy);
@@ -398,7 +398,7 @@ int process_command(struct command_t *command) {
       
       char *start = line_copy;
       for (char *p = line_copy; *p; p++) {
-        if (*p == delim) {
+        if (*p == delim) { // split fields by delimiter
           *p = '\0';
           fields_data[num_fields++] = strdup(start);
           start = p + 1;
@@ -408,7 +408,7 @@ int process_command(struct command_t *command) {
       
       free(line_copy);
       
-      for (int i = 0; i < field_count; i++) {
+      for (int i = 0; i < field_count; i++) { // print the specified fields
         int field_idx = fields_arr[i] - 1;
         if (field_idx >= 0 && field_idx < num_fields) {
           if (i > 0) printf("%c", delim);
@@ -431,7 +431,7 @@ int process_command(struct command_t *command) {
   // chatroom command implementation
   if (strcmp(command->name, "chatroom") == 0) {
     if (command->arg_count < 3) {
-      printf("-%s: %s: %s\n", sysname, command->name, strerror(errno));
+      printf("-%s: %s: %s\n", sysname, command->name, strerror(errno)); // checks if all arguments are provided
       return SUCCESS;
     }
     
@@ -443,14 +443,14 @@ int process_command(struct command_t *command) {
     snprintf(room_path, sizeof(room_path), "/tmp/chatroom-%s", roomname);
     snprintf(user_path, sizeof(user_path), "/tmp/chatroom-%s/%s", roomname, username);
     
-    snprintf(command, sizeof(command), "mkdir -p %s; mkfifo %s", room_path, user_path);
+    snprintf(command, sizeof(command), "mkdir -p %s; mkfifo %s", room_path, user_path); // create room directory and user named pipe
     system(command);
 
     printf("Welcome to %s!\n", roomname);
     
     pid_t reader = fork();
     if (reader == 0) { // reader child
-      snprintf(command, sizeof(command), "tail -f %s", user_path);
+      snprintf(command, sizeof(command), "tail -f %s", user_path); // read from the users named pipe
       system(command);
       exit(0);
     }
@@ -475,7 +475,7 @@ int process_command(struct command_t *command) {
         break;
       }
       
-      snprintf(command, sizeof(command), "ls %s | while read pipe; do echo '[%s] %s: %s' > %s/$pipe & done", room_path, roomname, username, input, room_path);
+      snprintf(command, sizeof(command), "ls %s | while read pipe; do echo '[%s] %s: %s' > %s/$pipe & done", room_path, roomname, username, input, room_path); // sends message to all users in the room
       system(command);
     }
   
@@ -636,17 +636,17 @@ int process_command(struct command_t *command) {
   if (pid == 0) // child
   {
     // pipe
-    if (command->next) {
+    if (command->next) { // checks if there is a piped command
       int pipe_file_d[2];
       pipe(pipe_file_d);
       pid_t pid2 = fork();
       
-      if (pid2 != 0) {
+      if (pid2 != 0) { // write to pipe
         close(pipe_file_d[0]);
         dup2(pipe_file_d[1], STDOUT_FILENO);
         close(pipe_file_d[1]);
       } 
-      else {
+      else { // read from pipe
         close(pipe_file_d[1]);
         dup2(pipe_file_d[0], STDIN_FILENO);
         close(pipe_file_d[0]);
