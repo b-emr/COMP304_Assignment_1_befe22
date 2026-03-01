@@ -428,6 +428,61 @@ int process_command(struct command_t *command) {
     return SUCCESS;
   }
 
+  // chatroom command implementation
+  if (strcmp(command->name, "chatroom") == 0) {
+    if (command->arg_count < 3) {
+      printf("-%s: %s: %s\n", sysname, command->name, strerror(errno));
+      return SUCCESS;
+    }
+    
+    char *roomname = command->args[1];
+    char *username = command->args[2];
+    char room_path[256], user_path[256];
+    char command[512];
+    
+    snprintf(room_path, sizeof(room_path), "/tmp/chatroom-%s", roomname);
+    snprintf(user_path, sizeof(user_path), "/tmp/chatroom-%s/%s", roomname, username);
+    
+    snprintf(command, sizeof(command), "mkdir -p %s; mkfifo %s", room_path, user_path);
+    system(command);
+
+    printf("Welcome to %s!\n", roomname);
+    
+    pid_t reader = fork();
+    if (reader == 0) { // reader child
+      snprintf(command, sizeof(command), "tail -f %s", user_path);
+      system(command);
+      exit(0);
+    }
+    
+    char input[256];
+    while (1) {
+      printf("[%s] %s > ", roomname, username);
+      fflush(stdout);
+      if (fgets(input, sizeof(input), stdin) == NULL) {
+        break;
+      }
+      if (strlen(input) == 0) {
+        continue;
+      }
+      
+      int len = strlen(input);
+      if (input[len - 1] == '\n') {
+        input[len - 1] = '\0';
+      }
+      
+      if (strcmp(input, "quit") == 0) {
+        break;
+      }
+      
+      snprintf(command, sizeof(command), "ls %s | while read pipe; do echo '[%s] %s: %s' > %s/$pipe & done", room_path, roomname, username, input, room_path);
+      system(command);
+    }
+  
+    wait(NULL);
+    return SUCCESS;
+  }
+
   pid_t pid = fork();
   if (pid == 0) // child
   {
