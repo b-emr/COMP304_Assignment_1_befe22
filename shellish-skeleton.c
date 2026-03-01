@@ -352,6 +352,82 @@ int process_command(struct command_t *command) {
     }
   }
 
+  // cut commend implementation
+  if (strcmp(command->name, "cut") == 0) {
+    char delim = '\t';
+    char *fields = NULL;
+    
+    for (int i = 1; i < command->arg_count - 1; i++) {
+      if (strcmp(command->args[i], "-d") == 0 || strcmp(command->args[i], "--delimiter") == 0) {
+        delim = command->args[i + 1][0];
+        i++;
+      } 
+      else if (strcmp(command->args[i], "-f") == 0 || strcmp(command->args[i], "--fields") == 0) {
+        fields = command->args[i + 1];
+        i++;
+      }
+    }
+    
+    if (!fields) {
+      printf("-%s: %s: %s\n", sysname, command->name, strerror(errno));
+      return SUCCESS;
+    }
+    
+    int *fields_arr = (int *) malloc(sizeof(int) * 100);
+    int field_count = 0;
+    char *fields_copy = strdup(fields);
+    char *token = strtok(fields_copy, ",");
+    while (token && field_count < 100) {
+      fields_arr[field_count++] = atoi(token);
+      token = strtok(NULL, ",");
+    }
+    free(fields_copy);
+    
+    FILE *input = stdin;
+    
+    char line[1024];
+    while (fgets(line, sizeof(line), input)) {
+      int len = strlen(line);
+      if (len > 0 && line[len - 1] == '\n') {
+        line[len - 1] = '\0';
+      }
+      
+      char *line_copy = strdup(line);
+      char **fields_data = (char **)malloc(sizeof(char *) * 100);
+      int num_fields = 0;
+      
+      char *start = line_copy;
+      for (char *p = line_copy; *p; p++) {
+        if (*p == delim) {
+          *p = '\0';
+          fields_data[num_fields++] = strdup(start);
+          start = p + 1;
+        }
+      }
+      fields_data[num_fields++] = strdup(start);
+      
+      free(line_copy);
+      
+      for (int i = 0; i < field_count; i++) {
+        int field_idx = fields_arr[i] - 1;
+        if (field_idx >= 0 && field_idx < num_fields) {
+          if (i > 0) printf("%c", delim);
+          printf("%s", fields_data[field_idx]);
+        }
+      }
+      printf("\n");
+      
+      for (int i = 0; i < num_fields; i++) {
+        free(fields_data[i]);
+      }
+      free(fields_data);
+    }
+    
+    free(fields);
+    free(fields_arr);
+    return SUCCESS;
+  }
+
   pid_t pid = fork();
   if (pid == 0) // child
   {
