@@ -1,82 +1,26 @@
 # COMP304_Assignment_1_befe22
 
-# Part 3: Custom Command
-## *skeleton*
-*skeleton* is a command that creates project skeletons for many languages. 
+## Part 1:
+In that part we need to implement our execvp() command using execv() function. For that purpose we need to search our environment and find the executable command which name is given in the shell. So I implement *find_executable()* function for search and find executable in the PATH variables.
 
-It currently supports 4 languages:
-- Python (python)
-- Java (java)
-- C (c)s
-- C++ (cpp)
+And also we need to implement background execution. For that purpose we need to change parent's *wait(0)* command. We need to take it inside a if closure.
 
- Usage
-You can use that command as follows:
-- *"skeleton language_name project_name"*
+## Part 2:
+In that part we need to implement I/O redirection and for that purpose I use *freopen()* function. It reassign file stream to a different file.
 
-## Python
-For Python it creates a project skeleton as follows:
+And also we need to implement piping operation. For that purpose I use *pipe()* function. It takes a file descriptor and I use dup2() function to redirect that file descriptor to appropriate destination.
+
+## Part 3:
+In that part we need to implement cut command that takes 2 argument -d and -f which are the delimiter and the fields indexes. For that purpose I use standart C string libraries.
+
+And in that part we also need to implement chatroom command which has named pipes in it. I test this command with 2 seperate terminals and communicate 2 terminals each other. But message input prompt has some bugs in it. I cannot solve it.
+
+And finally I implement *skeleton* command. It takes 2 argument first one is the language name second one is project name and it creates a project backbone with selected language.
+
+
 
 ```text
-project_name/
- ├── src/
- │    └── project_name/
- │         ├── __init__.py
- │         ├── __main__.py
- │         └── cli.py
- ├── tests/
- │    └── test_basic.py
- ├── pyproject.toml
- ├── README.md
- └── .gitignore
+Bünyamin Emre Efe
+83827
+College of Engineering
 ```
-## Java
-For Java it creates a project skeleton as follows:
-
-```text
-project_name/
- ├── pom.xml
- ├── src/
- │    ├── main/
- │    │    └── java/
- │    │         └── com/
- │    │              └── example/
- │    │                   └── project_name/
- │    │                        └── App.java
- │    └── test/
- │         └── java/
- │              └── com/
- │                   └── example/
- │                        └── project_name/
- │                             └── AppTest.java
- ├── README.md
- └── .gitignore
- ```
-
- ## C
- For C it creates a project skeleton as follows:
-
-```text
- project_name/
- ├── src/
- │    └── main.c
- ├── include/
- │    └── project_name.h
- ├── Makefile
- ├── README.md
- └── .gitignore
- ```
-
- ## C++
-  For C++ it creates a project skeleton as follows:
-
-```text
- project_name/
- ├── src/
- │    └── main.cpp
- ├── include/
- │    └── project_name.h
- ├── CMakeLists.txt
- ├── README.md
- └── .gitignore
- ```
